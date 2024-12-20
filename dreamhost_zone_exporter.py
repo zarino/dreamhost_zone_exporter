@@ -1,7 +1,7 @@
 import os
 from dreampylib import DreampyLib
 
-password = os.environ.get("DREAMHOST_APIKEY") or raw_input("API key: ")
+password = os.environ.get("DREAMHOST_APIKEY") or input("API key: ")
 ZONE_OUTPUT_TEMPLATE = "{record:<30} IN {type:<6} {value:<30} ; {comment}"
 
 if __name__ == '__main__':
@@ -19,8 +19,8 @@ if __name__ == '__main__':
 
     # If the connection is up, do some tests.
     if not connection.IsConnected():
-        print "Error connecting!"
-        print connection.Status()
+        print("Error connecting!")
+        print(connection.Status())
 
         import sys
         sys.exit(1)
@@ -37,13 +37,13 @@ if __name__ == '__main__':
         pprint.pprint(dns_data)
 
     for a in dns_data:
-        print "# ", "-" * 50, "Account: %s" % a, "-" * 50
+        print("# ", "-" * 50, "Account: %s" % a, "-" * 50)
         zones = dns_data[a]
         for z in zones:
-            print "# ", "." * 50, "Zone: %s" % z, "." * 50
+            print("# ", "." * 50, "Zone: %s" % z, "." * 50)
             zone = zones[z]
-            print "$ORIGIN %s" % z
-            print "$TTL 600s"
+            print("$ORIGIN %s" % z)
+            print("$TTL 600s")
             for e in zone:
                 e["record"] += "."
-                print ZONE_OUTPUT_TEMPLATE.format(**e)
+                print(ZONE_OUTPUT_TEMPLATE.format(**e))

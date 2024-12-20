@@ -4,8 +4,8 @@
 
 # UUID is needed to generate a nice random uuid for dreamhost
 import uuid
-import urllib
-import urllib2
+from urllib.request import urlopen
+from urllib.parse import urlencode
 
 DEBUG = False
 defaultReturnType = 'dict'
@@ -60,7 +60,7 @@ class _RemoteCommand(object):
 
     def __call__(self, returnType=None, *args, **kwargs):
         if DEBUG:
-            print "Called %s(%s)" % (self._name, str(kwargs))
+            print("Called %s(%s)" % (self._name, str(kwargs)))
 
         if self._parent.IsConnected():
 
@@ -72,10 +72,11 @@ class _RemoteCommand(object):
             request['unique_id'] = str(uuid.uuid4())
 
             if DEBUG:
-                print request
+                print(request)
 
-            self._connection = urllib2.urlopen(
-                self._url, urllib.urlencode(request)
+            self._connection = urlopen(
+                self._url,
+                urlencode(request).encode('utf-8')
             )
             return self._ParseResult(returnType or defaultReturnType)
         else:
@@ -83,7 +84,7 @@ class _RemoteCommand(object):
 
     def _ParseResult(self, returnType):
         '''Parse the result of the request'''
-        lines = [l.strip() for l in self._connection.readlines()]
+        lines = [l.decode('utf-8').strip() for l in self._connection.readlines()]
 
         self._status = lines[0]
 
@@ -106,21 +107,20 @@ class _RemoteCommand(object):
 
             if DEBUG:
                 for t in table:
-                    print t
+                    print(t)
 
             return table
 
         else:
             if DEBUG:
-                print 'ERROR with %s: %s - %s' % (
+                print('ERROR with %s: %s - %s' % (
                     self._name, lines[0], lines[1]
-                )
+                ))
             self._status = '%s: %s - %s' % (self._name, lines[0], lines[1])
             return False, lines[0], lines[1]
 
 
 class DreampyLib(object):
-
     def __init__(self, key=None, url='https://api.dreamhost.com'):
         '''Initialises the connection to the dreamhost API.'''
 
@@ -210,16 +210,16 @@ if __name__ == '__main__':
     # If the connection is up, do some tests.
     if connection.IsConnected():
         # For instance, list the available commands:
-        print 'Available commands:\n ',
+        print('Available commands:\n ',)
         listOfCommands = connection.AvailableCommands()
         pprint.pprint(listOfCommands)
-        # print '\n  '.join(listOfCommands)
+        # print('\n  '.join(listOfCommands))
 
         # Even if defaultReturnType is 'dict',
         # you can get the last result as a list, too.
 
-        print type(connection.dreamhost_ps.list_size_history(ps='ps7093'))
-        print type(connection.ResultList())
+        print(type(connection.dreamhost_ps.list_size_history(ps='ps7093')))
+        print(type(connection.ResultList()))
     else:
-        print "Error connecting!"
-        print connection.Status()
+        print("Error connecting!")
+        print(connection.Status())
