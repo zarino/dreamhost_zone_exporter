@@ -7,14 +7,14 @@ import uuid
 from urllib.request import urlopen
 from urllib.parse import urlencode
 
-DEBUG = False
+
 defaultReturnType = 'dict'
 
 
 class _RemoteCommand(object):
     # some magic to catch arbitrary maybe non-existent func. calls
     # supports "nested" methods (e.g. examples.getStateName)
-    def __init__(self, name, parent, url):
+    def __init__(self, name, parent, url, debug=False):
 
         # Store the name of the
         self._name = name
@@ -22,6 +22,7 @@ class _RemoteCommand(object):
         self._parent = parent
         self._url = url
         self._child = None
+        self._debug = debug
 
         self._resultKeys = []
         self._status = ""
@@ -59,7 +60,7 @@ class _RemoteCommand(object):
         return self._child
 
     def __call__(self, returnType=None, *args, **kwargs):
-        if DEBUG:
+        if self._debug:
             print("Called %s(%s)" % (self._name, str(kwargs)))
 
         if self._parent.IsConnected():
@@ -71,7 +72,7 @@ class _RemoteCommand(object):
             request['cmd'] = self._cmd
             request['unique_id'] = str(uuid.uuid4())
 
-            if DEBUG:
+            if self._debug:
                 print(request)
 
             self._connection = urlopen(
@@ -86,7 +87,7 @@ class _RemoteCommand(object):
         '''Parse the result of the request'''
         lines = [l.decode('utf-8').strip() for l in self._connection.readlines()]
 
-        if DEBUG:
+        if self._debug:
             print("response", lines)
 
         self._status = lines[0]
@@ -108,14 +109,14 @@ class _RemoteCommand(object):
             else:
                 table = self._resultDict
 
-            if DEBUG:
+            if self._debug:
                 for t in table:
                     print(t)
 
             return table
 
         else:
-            if DEBUG:
+            if self._debug:
                 print('ERROR with %s: %s - %s' % (
                     self._name, lines[0], lines[1]
                 ))
@@ -124,7 +125,7 @@ class _RemoteCommand(object):
 
 
 class DreampyLib(object):
-    def __init__(self, key=None, url='https://api.dreamhost.com'):
+    def __init__(self, key=None, url='https://api.dreamhost.com', debug=False):
         '''Initialises the connection to the dreamhost API.'''
 
         self._key = key
@@ -132,6 +133,7 @@ class DreampyLib(object):
         self._lastCommand = None
         self._connected = False
         self._availableCommands = []
+        self._debug = debug
 
         if key:
             self.Connect()
@@ -143,7 +145,7 @@ class DreampyLib(object):
         if url:
             self._url = url
 
-        if DEBUG:
+        if self._debug:
             print("connecting to url", self._url, "with key", self._key)
 
         self._connected = True
@@ -191,7 +193,7 @@ class DreampyLib(object):
         }
 
     def __getattr__(self, name):
-        self._lastCommand = _RemoteCommand(name, self, self._url)
+        self._lastCommand = _RemoteCommand(name, self, self._url, self._debug)
         return self._lastCommand
 
     def dir(self):
@@ -211,7 +213,7 @@ if __name__ == '__main__':
     defaultReturnType = 'dict'
 
     # Initialize the library and open a connection
-    connection = DreampyLib(key)
+    connection = DreampyLib(key, debug=DEBUG)
 
     # If the connection is up, do some tests.
     if connection.IsConnected():
