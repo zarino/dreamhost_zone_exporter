@@ -86,6 +86,9 @@ class _RemoteCommand(object):
         '''Parse the result of the request'''
         lines = [l.decode('utf-8').strip() for l in self._connection.readlines()]
 
+        if DEBUG:
+            print("response", lines)
+
         self._status = lines[0]
 
         if self._status == 'success':
@@ -139,6 +142,9 @@ class DreampyLib(object):
 
         if url:
             self._url = url
+
+        if DEBUG:
+            print("connecting to url", self._url, "with key", self._key)
 
         self._connected = True
         self._availableCommands = \
